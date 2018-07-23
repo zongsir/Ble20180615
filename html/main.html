@@ -1,0 +1,480 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, initial-scale=1.0, width=device-width"/>
+    <meta name="format-detection" content="telephone=no, email=no, date=no, address=no">
+    <title>广汽车机外协蓝牙软件</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css" />
+    <link rel="stylesheet" type="text/css" href="../css/box.css" />
+    <script type="text/javascript" src="../script/jquery1.js"></script>
+    <script type="text/javascript" src="script/api.js"></script>
+    <script type="text/javascript" src="script/public.js"></script>
+	<script type="text/javascript">
+      // var api_url = "http://120.27.46.75:800/emitBle.php";
+          var api_url = "http://192.168.253.4/emitBle.php";
+      var devId = 1001;
+	    //初始化
+	    apiready = function(){
+	    	//alert("蓝牙初始化");
+	    	var bluetoothSPP = api.require("btsppiot");
+	        bluetoothSPP.INIT(
+		        {},
+	        	function(ret, err){
+	        	});
+
+	        /*
+	        bluetoothSPP.connect(
+			        {
+				        sppMac:"30:1A:1C:09:0E:32",
+				        isToast:false
+				    },function(ret, err){
+				        var status = ret.status;
+				        if(status == 3)api.toast({ msg: "给定物理地址有误"});
+				    });
+	        */
+
+	        // bluetoothSPP.autoConnect(); //自动连接以配对串口蓝牙
+// var ble =123;
+          // setTimeout(";",100);
+            setInterval('api_getPlan()',2000);
+	     }
+
+                 //定时检测是否正确
+
+
+// 定时器获取是否有计划任务
+// 如果有计划任务 就根据计划任务的类型直接执行相应操作，
+//访问接口获取一个当前的计划任务
+
+          function api_getPlan(){
+
+            var datas = $.ajax({url:api_url+"?setType=getPlan&&devId="+devId,async:true,dataType:'json'});
+            $.ajax({ url: api_url+"?setType=getPlan&&devId="+devId,async:true,success: function(data){
+
+		            if (datas.status!=200) {
+		              return false;
+		            }
+		            var data = datas.responseJSON;
+		            console.log(JSON.stringify(data));
+		            // console.log(data.state)
+		            if ((data.state)===200) {
+		              switch(data.type)
+		              {
+		              case "1":
+		                $.ajax({url:api_url+"?setType=setStatus&&planId="+data.planId,async:false,dataType:'json'});
+		                api_ScanDevice(data);
+		                break;
+		              case "2":
+		                $.ajax({url:api_url+"?setType=setStatus&&planId="+data.planId,async:true,dataType:'json'});
+		                api_sendConnect(data);
+		                break;
+		              case '3':
+		                $.ajax({url:api_url+"?setType=setStatus&&planId="+data.planId,async:true,dataType:'json'});
+		                api_checkState(data);
+		                break;
+		              case '4':
+		                $.ajax({url:api_url+"?setType=setStatus&&planId="+data.planId,async:true,dataType:'json'});
+		                  api_closeBle(data);
+		                break;
+		              default:
+
+		              }
+		            }
+		      }});
+            // console.log(data);
+            // console.log(api_url+"?setType=getPlan&&devId="+devId)
+            // return false;
+          }
+
+     //蓝牙扫描
+ function api_ScanDevice(data){
+  //  console.log(data)
+  var planId = data.planId;
+
+scanDevicezzzz(planId);
+  return false;
+  var planTime = data.planTime;
+  if(Number(planTime)<1000){
+    planTime = 1000;
+  }
+  //  return false;
+    var errorStr = '';
+
+    // ble.initManager(function(ret) {
+    //     if (ret.state == "poweredOn") {
+    //         // info.rizhi= info.rizhi + "<br/>-----初始化成功";
+    //     }else{
+    //       errorStr = "初始化失败"+"."+errorStr;
+    //     }
+    // });
+    // var api_setDataList_interval =  setInterval("api_setDataList("+planId+")",1000);
+    //蓝牙 4.0 4.1 支持的案例
+    for (var i = 0; i < Number(planTime); i=i+2000) {
+        // console.log((planTime));
+        var start = new Date().getTime();
+        scanDevicezzzz(planId);
+        while(true){
+          if(Number(new Date().getTime())-Number(start)>2000){
+            clearInterval(api_setDataList_interval);
+            break;
+          }
+        }
+    }
+    return false;
+    // console.log((planTime));
+    // // setInterval(function(){scanDevicezzzz(planId) },2000);
+    // var api_setDataList_interval = setInterval(function(){scanDevicezzzz(planId) },2000);
+    // console.log(api_setDataList_interval);
+    // // var api_setDataList_interval =
+    // // api_sleep(1000);
+    //   var start = new Date().getTime();
+    //   // console.log(start);
+    //   while(true){
+    //     if(Number(new Date().getTime())-Number(start)>Number(planTime)){
+    //       clearInterval(api_setDataList_interval);
+    //       break;
+    //     }
+    //   }
+    ////setInterval(",Number(planTime));
+
+ }
+ function api_setDataList(planId){
+// return false;
+// console.log(JSON.stringify(data));
+// console.log(data.planId);
+var errorStr = '';
+ var ble = api.require('ble');
+ ble.scan({
+     serviceUUIDs: []
+ }, function(ret,error) {
+     if (ret.status) {
+         // info.rizhi= info.rizhi + "<br/>-----开始搜索";
+     }else{
+         errorStr = "开始搜索失败"+"."+errorStr;
+     }
+ });
+   ble.getPeripheral(function(ret) {
+       if (ret) {
+         console.log(JSON.stringify(ret));
+         api.alert({ msg: JSON.stringify(ret) });
+         // return JSON.stringify(ret);
+         var errorStr = "获取搜索结果成功"+"."+errorStr;
+         var datastr = JSON.stringify(ret);
+         var state = 200;
+       }else{
+         var errorStr = "获取搜索结果失败"+"."+errorStr;
+         var datastr = '';
+         var state =501;
+       }
+       $.ajax({url:api_url+"?setType=setPer&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&content="+datastr+"&&errorStr="+errorStr,async:false,dataType:'json'});
+   });
+ }
+
+function api_sendConnect(data){
+  var planId = data.planId;
+  // var uuid = "BC:54:36:05:AB:EA";
+  var uuid = data.planTime;
+  var datastr = "";
+  var state = 200;
+  var SPP = api.require("btsppiot");
+    SPP.connect({
+        sppMac:uuid,
+        isToast:true
+    },function(ret, err){
+    var state = 501;
+    var errorStr = "连接失败";
+
+    console.log(JSON.stringify(ret));
+    var status = ret.status;
+    if(status){
+      if(status == 3){
+        api.toast({ msg: "给定物理地址有误"});
+        var errorStr = "给定物理地址有误";
+        var state = 501;
+      }else{
+        api.toast({ msg: "连接成功"});
+        var errorStr = "连接成功";
+        var state = 200;
+      }
+    }
+
+    $.ajax({url:api_url+"?setType=setSendConnect&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&errorStr="+errorStr,async:false,dataType:'json'});
+  });
+}
+function api_checkState(data){
+  var planTime = Number(data.planTime);
+    var planId = data.planId;
+  for(var i=1000;i<=planTime;i=i+1000){
+    // i>Number(planTime)
+
+    var bleSPP = api.require("btsppiot");
+    bleSPP.connectState(
+      {},
+    function(ret, err){
+      var status = ret.connectState;
+          if(status == 1)api.toast({ msg: "连接断开"});
+          if(status == 2){
+            api.toast({ msg: "已经连接"});
+            var state = 200;
+            $.ajax({url:api_url+"?setType=setcheckState&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&errorStr="+errorStr,async:false,dataType:'json'});
+            // break;
+            return false;
+          }
+          if(status == 3)api.toast({ msg: "正在连接"});
+          if(status == 4)api.toast({ msg: "连接失败"});
+          if(status == 5)api.toast({ msg: "连接丢失"});
+      });
+    api_sleep(1000);
+  }
+  var state = 501;
+  $.ajax({url:api_url+"?setType=setcheckState&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&errorStr="+"连接失败",async:false,dataType:'json'});
+
+
+}
+
+//sleep 函数
+function api_sleep(n){
+  var start = new Date().getTime();
+  console.log(start);
+  while(true)if(new Date().getTime() - start>n)break;
+}
+
+function api_closeBle(data){
+  initSimpleBle();
+var state = 200;
+  var planId = data.planId;
+  var errorStr = "操作成功";
+  $.ajax({url:api_url+"?setType=setcloseBle&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&errorStr="+errorStr,async:false,dataType:'json'});
+
+}
+     //蓝牙已配对列表
+     function pairedDevice(){
+ 	    	//alert("蓝牙已配对列表");
+ 	    	var SPP = api.require("btsppiot");
+ 	        SPP.paired({
+ 	        },function(ret, err){
+ 	        });
+ 		}
+
+ 		//设置蓝牙设备是否可见
+ 		function discoverable(){
+ 	    	//alert("蓝牙可见设置");
+ 	    	var bleSPP = api.require("btsppiot");
+ 	    	var time = 128;
+ 	    	var is = true;
+ 	    	bleSPP.discoverable(
+ 	    	{
+ 	    	isDiscoverable:is,
+ 	    	time:time,
+ 	    	},
+ 	    	function(ret, err){
+ 	        });
+ 		}
+
+ 		//发送数据
+ 		function sendMessage(){
+ 	    	//alert("发送数据");
+ 			var SPP = api.require("btsppiot");
+ 		    SPP.send({
+ 		        sendData:"1234567890qazwsxedcrfvtgbyhnujmi",
+ 		    },function(ret, err){
+ 		    });
+ 		}
+
+ 	    //读取数据
+ 	    function readMessage(){
+ 	    	//alert("读取数据");
+ 	    	var SPP = api.require("btsppiot");
+ 	        SPP.receive({
+ 	        },function(ret, err){
+ 	        });
+ 		}
+
+ 		//获取状态
+ 	    function bluetoothState(){
+ 	    	//alert("获取状态");
+ 	    	var bleSPP = api.require("btsppiot");
+ 	    	bleSPP.bluetoothState(
+ 	    		{},
+ 	    		function(ret, err){
+ 	    			var status = ret.bluetoothState;
+ 	    	        if(status == 1)api.toast({ msg: "蓝牙已关闭"});
+ 	    	        if(status == 2)api.toast({ msg: "蓝牙已开启"});
+ 	    	        if(status == 3)api.toast({ msg: "蓝牙正在关闭"});
+ 	    	        if(status == 4)api.toast({ msg: "蓝牙正在开启"});
+ 	        	});
+ 		}
+
+ 	  //获取状态
+ 	    function connectState(){
+ 	    	//alert("获取状态");
+ 	    	var bleSPP = api.require("btsppiot");
+ 	    	bleSPP.connectState(
+ 	    		{},
+     		function(ret, err){
+     			var status = ret.connectState;
+     	        if(status == 1)api.toast({ msg: "连接断开"});
+     	        if(status == 2)api.toast({ msg: "已经连接"});
+     	        if(status == 3)api.toast({ msg: "正在连接"});
+     	        if(status == 4)api.toast({ msg: "连接失败"});
+     	        if(status == 5)api.toast({ msg: "连接丢失"});
+         	});
+ 		}
+
+ 	  //蓝牙扫描
+ 		function scanDevice(){
+     	    var SPP = api.require("btsppiot");
+     	    SPP.scan({
+     	    },function(ret, err){
+     	    });
+     }
+     function sssss(){
+       var SPP = api.require("btsppiot");
+        SPP.scan({
+            isDialog:false,
+            isToast:false
+        },function(ret, err){
+            var status = ret.status;
+            if(status == 1)api.toast({ msg: "本机没有蓝牙设备"});
+            if(status == 2)api.toast({ msg: "本机蓝牙没有开启"});
+            var bondState = ret.bondState;
+            if(bondState == 1)api.toast({ msg: "取消配对"});
+            if(bondState == 2)api.toast({ msg: "已经配对"});
+            if(bondState == 3)api.toast({ msg: "正在配对"});
+            var scanState = ret.scanState;
+            if(scanState == 1)api.toast({ msg: "扫描开始"});
+            if(scanState == 2)api.toast({ msg: "扫描完成"});
+            if(scanState == 3)api.toast({ msg: "发现设备"});
+            if(scanState == 4)api.toast({ msg: "配对改变"});
+            var scanArray = ret.scanArray;
+            if(scanArray.length != 0){
+              // alert(scanArray);
+              console.log(scanArray);
+            }
+            // for(var i in scanArray){
+            //     var scan = scanArray[i];
+            // }
+            // console.log(scanArray);
+            // if(scanArray.length != 0){
+            // console.log(scanArray);
+            //   alert(scanArray);
+            // }
+        });
+     }
+     function scanDevicezzzz(planId){
+       console.log('zzzzzzzzzzzzzzzzzzzzz'+planId)
+         var SPP = api.require("btsppiot");
+         SPP.scan({
+             isDialog:false,
+             isToast:false
+         },function(ret, err){
+              var errorStr = '';
+            //  var status = ret.status;
+            //  if(status == 1){
+            //    errorStr = "本机没有蓝牙设备";
+            //  }
+            //  if(status == 2){
+            //    errorStr = "本机蓝牙没有开启";
+            //  }
+            //  var bondState = ret.bondState;
+            //  if(bondState == 1){
+            //    errorStr = "取消配对";
+            //  }
+            //  if(bondState == 2){
+            //    errorStr = "正在配对";
+            //  }
+            //  if(bondState == 3){
+            //    errorStr = "正在配对";
+            //  }
+            //  var scanState = ret.scanState;
+            //  if(scanState == 1){
+            //    errorStr = "扫描开始";
+            //  }
+            //  if(scanState == 2){
+            //    errorStr = "扫描完成";
+            //  }
+            //  if(scanState == 3){
+            //    errorStr = "发现设备";
+            //  }
+            //  if(scanState == 4){
+            //    errorStr = "配对改变";
+            //  }
+            //  console.log(typeof(ret.scanArray));
+
+             var scanArray = ret.scanArray;
+             if(scanArray.length != 0){
+               // alert(scanArray);
+
+                var errorStr = "获取搜索结果成功"+"."+errorStr;
+                var datastr = JSON.stringify(scanArray);
+                var state = 200;
+                $.ajax({url:api_url+"?setType=setPer&&devId="+devId+"&&state="+state+"&&planId="+planId+"&&content="+datastr+"&&errorStr="+errorStr,async:true,dataType:'json'});
+               console.log(scanArray);
+              //  if (typeof(ret.scanArray)=='undefined') {
+              //     var errorStr = "获取搜索结果失败"+"."+errorStr;
+              //     var datastr = '';
+              //     var state =501;
+              // }else{
+              // }
+
+             }
+
+         });
+     }
+ 	  //关闭蓝牙
+ 		function initSimpleBle(){
+       var simpleBle = api.require("simpleBle");
+       simpleBle.init(function(ret) {
+         // alert(JSON.stringify(ret));
+       });
+         simpleBle.close();
+         // setTimeout("simpleBle.open()",1000);
+     }
+
+
+	</script>
+</head>
+<body>
+    <div id="wrap">
+        <div class="topbg">广汽车机外协蓝牙软件</div>
+        <div id="main">
+  			<!--<div class='itemtitle'>蓝牙串口通讯</div>-->
+				<!-- <div class="clickbtn" tapmode="active" onclick="scanDevicezzzz()" >api_ScanDevice</div>
+				<div class="clickbtn" tapmode="active" onclick="pairedDevice()" >已配对列表</div> -->
+				<div class="clickbtn" tapmode="active" onclick="pairedDevice()" >已配对列表</div>
+				<div class="clickbtn" tapmode="active" onclick="discoverable()" >蓝牙可见</div>
+				<div class="clickbtn" tapmode="active" onclick="scanDevice()" >蓝牙扫描</div>
+				<div class="clickbtn" tapmode="active" onclick="sendMessage()" >发送数据</div>
+				<div class="clickbtn" tapmode="active" onclick="readMessage()" >读取数据</div>
+				<div class="clickbtn" tapmode="active" onclick="bluetoothState()" >蓝牙状态</div>
+				<div class="clickbtn" tapmode="active" onclick="connectState()" >连接状态</div>
+        <div class="clickbtn clickColor" tapmode="active" onclick="initSimpleBle()" >重置蓝牙状态</div>
+
+		</div>
+	</div>
+</body>
+<style media="screen">
+  body { margin:0;}
+  .topbg { width:100%; background: url("../image/topbg.jpg"); background-size: 100% auto; font-size:28px; color: #fff; text-align: center; padding:70px 0; letter-spacing: 3px; font-weight: bold; font-family:PingFangSC-Medium;}
+  .itemtitle { font-size: 14px; color: #666; text-align: center;}
+  .clickbtn{
+    width: 100%;
+    height:46px;
+    background-color: #fff;
+    -webkit-border-radius:46px;
+    text-align: center;
+    line-height:46px;
+    font-size:16px; letter-spacing:1px;
+    color: #5a79ed;
+    cursor: pointer;
+    margin-top:10px;
+    -webkit-tap-highlight-color:rgba(202, 223, 255, 0.2);
+  }
+  #main { margin:40px 20px 20px 20px;}
+  .clickColor{
+    background-color: #a95dff;
+    color:white;
+  }
+</style>
+</html>
